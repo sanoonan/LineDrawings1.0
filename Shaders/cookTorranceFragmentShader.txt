@@ -1,0 +1,123 @@
+#version 400
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float beckmann_m;
+uniform float refraction;
+
+uniform sampler2D basic_texture;
+uniform bool has_texture;
+in vec2 texture_coordinates;
+
+
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+float pi = 3.1415926535897932384626433832795;
+
+in vec3 N;
+in vec3 L;
+//in vec3 R;
+in vec3 V;
+in vec3 H;
+
+void main()
+{
+	vec3 _N = normalize(N);
+	vec3 _L = normalize(L);
+//	vec3 _R = normalize(R);
+	vec3 _V = normalize(V);
+	vec3 _H = normalize(H);
+
+	vec3 Ia = La * ka;
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	vec3 Id = Ld * kd * dot_diffuse;
+
+
+//beckmann stuff
+	float dot_NH = dot (_N, _H);
+
+	float alpha = acos(dot_NH);
+
+	float m2 = pow(beckmann_m, 2);
+
+	float top = tan(alpha);
+	top = pow(top, 2);
+	top = top/m2;
+	top = 0-top;
+	top = exp(top);
+
+	float bot = cos(alpha);
+	bot = pow(bot, 4);
+	bot = pi*m2*bot;
+
+	float D = top/bot;
+
+//fresnell stuff
+//	float n1, n2;
+//	n1 = 1.0f;
+//	n2 = refraction;
+
+//	top = n1-n2;
+//	bot = n1+n2;
+//	float r0 = top/bot;
+
+	float r0 = refraction;
+	r0 = pow(r0, 2);
+
+	float dot_HV = dot(_H, _V);
+	alpha = 1-dot_HV;
+	alpha = pow(alpha, 5);
+
+	float F = r0 + (1-r0)*alpha;
+
+//geometric attenuation stuff
+	float g1 = 1.0f;
+
+	float dot_NV = dot(_N, _V);
+	float dot_LN = dot(_L, _N);
+
+	top = 2*dot_NH*dot_NV;
+	float g2 = top/dot_HV;
+
+	top = 2*dot_NH*dot_LN;
+	float g3 = top/dot_HV;
+
+	float G = min(g1, g2);
+	G = min(G, g3);
+
+
+//all together stuff
+	top = D*F*G;
+
+	bot = 4*dot_NV*dot_LN;
+
+
+	float specular_factor = top/bot;
+
+	vec3 Is = Ls * ks * specular_factor; // final specular intensity
+	
+
+
+
+
+
+	vec3 LightIntensity = Ia + Id + Is;
+
+
+	vec4 texel;
+
+	if(has_texture)
+		texel = texture2D(basic_texture, texture_coordinates);
+	else
+		texel = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	gl_FragColor = texel * vec4 (LightIntensity, 1.0);
+
+}

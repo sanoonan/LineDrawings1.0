@@ -1,0 +1,108 @@
+#version 400
+
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec3 vertex_normal;
+layout(location = 2) in vec2 vertex_texture;
+
+layout(location = 3) in vec3 vertex_tangent;
+layout(location = 4) in vec3 vertex_bittangent;
+
+
+
+uniform bool has_normalmap;
+
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 model;
+
+uniform vec4 LightPosition;
+out vec2 texture_coordinates;
+
+out vec3 N;
+out vec3 L;
+//out vec3 H;
+
+void main()
+{
+	//view space
+
+	mat4 ModelViewMatrix = view * model;
+	mat3 NormalMatrix = mat3(ModelViewMatrix);
+
+
+	// normal in view space
+	N = normalize( NormalMatrix * vertex_normal);//camera space
+
+	if(has_normalmap)
+	{
+		vec3 vTangent;
+		vec3 c1 = cross(vertex_normal, vec3(0.0, 0.0, 1.0));
+		vec3 c2 = cross(vertex_normal, vec3(0.0, 1.0, 0.0));
+
+		if(length(c1) > length(c2))
+		{
+			vTangent = c1;
+		}
+		else
+		{
+			vTangent = c2;
+		}
+
+
+
+		vec3 T = normalize( NormalMatrix * vTangent);
+	//	vec3 T = normalize( NormalMatrix * vertex_tangent);
+	//	vec3 B = normalize( NormalMatrix * vertex_bittangent);
+		vec3 B = cross (N, T);
+
+		vec3 position = vec3(ModelViewMatrix * vec4(vertex_position,1.0));
+
+
+		vec3 light_position = vec3(view * LightPosition);
+		vec3 light_dir = normalize(light_position - position);
+
+		mat3 ViewTangentMatrix = mat3( T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z);
+
+
+	    L.x = dot(light_dir, T);
+		L.y = dot(light_dir, B);
+		L.z = dot(light_dir, N);
+	//	L = normalize(L);
+
+	//	L = ViewTangentMatrix * light_dir;
+	//	L = normalize(L);
+
+	//	vec3 V = vec3(normalize (-position));
+
+	//	V = ViewTangentMatrix * V;
+
+	//	vec3 half_vec = normalize(L+V);
+
+
+	//	H.x = dot(half_vec, T);
+	//	H.y = dot(half_vec, B);
+	//	H.z = dot(half_vec, N);
+	//	H = half_vec;
+
+		
+	}
+	else
+	{
+		// position in view space
+		vec4 position = ModelViewMatrix * vec4(vertex_position,1.0);//camera space
+
+		//normalised vector towards the light source
+		vec4 light_position = view * LightPosition;
+		L = normalize(vec3(light_position - position));
+	}
+	
+
+	gl_Position = proj * view * model * vec4(vertex_position, 1.0);
+
+	texture_coordinates = vertex_texture;
+
+
+}
+
+
+  

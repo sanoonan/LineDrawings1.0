@@ -1,0 +1,90 @@
+#version 400
+
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec3 vertex_normal;
+layout(location = 2) in vec2 vertex_texture;
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float spec_ex;
+
+out vec3 LightIntensity;
+
+
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 model;
+
+
+
+uniform vec4 LightPosition; // Light position in world coords.
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+
+out vec2 texture_coordinates;
+
+void main()
+{
+
+	vec3 Ia = La * ka;
+
+
+
+
+	//view space
+
+	mat4 ModelViewMatrix = view * model;
+	mat3 NormalMatrix =  mat3(ModelViewMatrix);
+
+
+	// normal in view space
+	vec3 N = normalize( NormalMatrix * vertex_normal);//camera space
+	// position in view space
+
+	vec4 position = ModelViewMatrix * vec4(vertex_position,1.0);//camera space
+
+	//normalised vector towards the light source
+	vec4 light_position = view * LightPosition;
+	vec3 L = normalize(vec3(light_position - position));
+  
+	float dot_diffuse = dot(L, N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	vec3 Id = Ld * kd * dot_diffuse;
+
+	
+
+
+	
+
+	vec3 R = reflect (-L, N);
+
+	vec3 V = vec3(normalize (-position));
+
+	float dot_spec = dot (R, V);
+
+	dot_spec = max (dot_spec, 0.0);
+
+	float specular_factor = pow (dot_spec, spec_ex);
+
+	vec3 Is = Ls * ks * specular_factor; // final specular intensity
+	
+
+
+
+
+
+	LightIntensity = Ia + Id + Is;
+  
+	// Convert position to clip coordinates and pass along
+	gl_Position = proj * view * model * vec4(vertex_position, 1.0);
+
+	texture_coordinates = vertex_texture;
+}
+
+
+  

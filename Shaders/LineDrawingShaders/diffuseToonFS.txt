@@ -1,0 +1,43 @@
+#version 400
+
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float spec_ex;
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+uniform vec3 background_colour;
+uniform float darkness;
+uniform float threshold;
+
+in vec3 L;
+in vec3 N;
+
+
+void main()
+{
+	vec3 _N = normalize(N);
+
+	vec3 _L = normalize(L);
+
+
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	float intensity = dot_diffuse;
+	
+	vec3 colour = background_colour;
+
+
+	if(intensity < threshold)
+		colour *= darkness;
+
+
+
+	gl_FragColor = vec4 (colour, 1.0);
+}

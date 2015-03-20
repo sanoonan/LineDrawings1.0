@@ -1,0 +1,69 @@
+#version 400
+
+uniform sampler2D diffuse_tex;
+uniform sampler2D normal_tex;
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float spec_ex;
+
+
+uniform bool has_normalmap;
+uniform bool has_texture;
+
+in vec2 texture_coordinates;
+
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+
+in vec3 L;
+in vec3 N;
+//in vec3 H;
+
+void main()
+{
+	vec3 _N;
+
+	if(has_normalmap)
+	{
+		_N = vec3(2.0 * texture(normal_tex, texture_coordinates) - 1.0);
+
+
+		_N = normalize(_N);
+	}
+	else
+		_N = normalize(N);
+
+
+
+	vec3 _L = normalize(L);
+
+
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	vec3 Id = Ld * kd * dot_diffuse;
+
+
+
+	vec3 LightIntensity = Id;
+
+
+	vec4 texel;
+
+	if(has_texture)
+		texel = texture2D(diffuse_tex, texture_coordinates);
+	else
+		texel = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+//	gl_FragColor = vec4(_L, 1.0);
+//	gl_FragColor = vec4 (LightIntensity, 1.0);
+	gl_FragColor = texel * vec4 (LightIntensity, 1.0);
+//	gl_FragColor = texel;
+
+}

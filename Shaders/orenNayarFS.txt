@@ -1,0 +1,80 @@
+#version 400
+
+
+uniform vec3 kd;
+
+
+uniform sampler2D diffuse_tex;
+uniform sampler2D normal_tex;
+
+
+uniform bool has_texture;
+in vec2 texture_coordinates;
+
+
+
+uniform bool has_normalmap;
+
+uniform vec3 Ld; 
+
+uniform float roughness;
+
+
+in vec3 N;
+in vec3 L;
+in vec3 V;
+
+
+void main()
+{
+	vec3 _N;
+
+	if(has_normalmap)
+	{
+		_N = vec3(2.0 * texture(normal_tex, texture_coordinates) - 1.0);
+		_N = normalize(_N);
+	}
+	else
+		_N = normalize(N);
+
+
+	vec3 _L = normalize(L);
+	vec3 _V = normalize(V);
+
+	float VdotN = dot(V, _N);
+	float LdotN = dot(L, _N);
+
+	float cos_theta_i = LdotN;
+	
+	float theta_r = acos(VdotN);
+	float theta_i = acos(cos_theta_i);
+	
+	float cos_phi_diff = dot(normalize(V - _N * VdotN), normalize(L - N * LdotN));
+	
+	float alpha = max(theta_i, theta_r);
+	float beta = min(theta_i, theta_r);
+	
+	float sigma2 = roughness * roughness;
+	
+	float A = 1.0 - 0.5 * sigma2 / (sigma2 + 0.33);
+	float B = 0.45 * sigma2 / (sigma2 + 0.09);
+	
+	float diffuse = max(cos_theta_i, 0.0) * (A + (B * max(cos_phi_diff, 0.0) * sin(alpha) * tan(beta)));
+
+	vec3 Id = Ld * kd * diffuse;
+
+
+
+	vec3 LightIntensity = Id;
+
+
+	vec4 texel;
+
+	if(has_texture)
+		texel = texture2D(diffuse_tex, texture_coordinates);
+	else
+		texel = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	gl_FragColor = texel * vec4 (LightIntensity, 1.0);
+
+}

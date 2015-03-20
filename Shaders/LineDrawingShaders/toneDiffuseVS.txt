@@ -1,0 +1,46 @@
+#version 400
+
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec3 vertex_normal;
+
+
+
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 model;
+
+uniform vec4 LightPosition;
+
+out vec3 N;
+out vec3 L;
+
+
+void main()
+{
+	//view space
+
+	mat4 ModelViewMatrix = view * model;
+	mat3 NormalMatrix =  mat3(ModelViewMatrix);
+
+
+	// normal in view space
+	N = normalize( NormalMatrix * vertex_normal);//camera space
+
+	// position in view space
+	vec4 position = ModelViewMatrix * vec4(vertex_position,1.0);//camera space
+
+	//normalised vector towards the light source
+	vec4 light_position = view * LightPosition;
+	L = normalize(vec3(light_position - position));
+  
+	
+	// Convert position to clip coordinates and pass along
+	gl_Position = proj * view * model * vec4(vertex_position, 1.0);
+
+
+
+
+}
+
+
+  

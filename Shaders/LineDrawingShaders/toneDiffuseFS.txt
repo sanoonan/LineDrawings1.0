@@ -1,0 +1,33 @@
+#version 400
+
+
+
+uniform vec3 Ld; 
+
+
+
+in vec3 L;
+in vec3 N;
+
+void main()
+{
+	vec3 _N = normalize(N);
+	vec3 _L = normalize(L);
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+
+	vec3 Id = Ld * dot_diffuse;
+
+
+
+
+
+	vec3 LightIntensity = Id;
+
+
+
+	gl_FragColor = vec4 (LightIntensity, 1.0);
+
+}

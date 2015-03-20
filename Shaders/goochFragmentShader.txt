@@ -1,0 +1,64 @@
+#version 400
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float spec_ex;
+
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+uniform vec3 kcool;
+uniform vec3 kwarm;
+
+float alpha = 0;
+float beta = 0;
+
+in vec3 N;
+in vec3 L;
+in vec3 R;
+in vec3 V;
+
+void main()
+{
+	vec3 _N = normalize(N);
+	vec3 _L = normalize(L);
+	vec3 _R = normalize(R);
+	vec3 _V = normalize(V);
+
+	vec3 kcdiff = kcool + alpha * kd;
+	vec3 kwdiff = kwarm + beta * kd;
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	float frac = (1+dot_diffuse)/2;
+
+	vec3 kdfinal = frac*kwdiff + (1-frac)*kcdiff;
+
+	vec3 Id = Ld * kdfinal;
+
+
+
+
+	float dot_spec = dot (_R, _V);
+
+	dot_spec = max (dot_spec, 0.0);
+
+	float specular_factor = pow (dot_spec, spec_ex);
+
+	vec3 Is = Ls * ks * specular_factor; // final specular intensity
+	
+
+
+
+
+
+	vec3 LightIntensity = Id + Is;
+
+
+	gl_FragColor = vec4 (LightIntensity, 1.0);
+
+}

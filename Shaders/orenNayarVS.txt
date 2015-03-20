@@ -1,0 +1,89 @@
+#version 400
+
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec3 vertex_normal;
+layout(location = 2) in vec2 vertex_texture;
+
+
+uniform bool has_normalmap;
+
+
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 model;
+
+uniform vec4 LightPosition;
+out vec2 texture_coordinates;
+
+out vec3 N;
+out vec3 L;
+out vec3 V;
+
+
+void main()
+{
+	//view space
+
+	mat4 ModelViewMatrix = view * model;
+	mat3 NormalMatrix = mat3(ModelViewMatrix);
+
+
+	// normal in view space
+	N = normalize( NormalMatrix * vertex_normal);//camera space
+
+	if(has_normalmap)
+	{
+		vec3 vTangent;
+		vec3 c1 = cross(vertex_normal, vec3(0.0, 0.0, 1.0));
+		vec3 c2 = cross(vertex_normal, vec3(0.0, 1.0, 0.0));
+
+		if(length(c1) > length(c2))
+			vTangent = c1;
+		else
+			vTangent = c2;
+
+		vec3 T = normalize( NormalMatrix * vTangent);
+		vec3 B = cross (N, T);
+
+		mat3 ViewTangentMatrix = mat3( T.x, B.x, N.x, T.y, B.y, N.y, T.z, B.z, N.z);
+
+		vec3 position = vec3(ModelViewMatrix * vec4(vertex_position,1.0));
+
+
+		vec3 light_position = vec3(view * LightPosition);
+		vec3 light_dir = normalize(light_position - position);
+
+		
+
+		L = ViewTangentMatrix * light_dir;
+
+
+		V = vec3(normalize (-position));
+
+		V = ViewTangentMatrix * V;
+
+
+
+		
+	}
+	else
+	{
+		// position in view space
+		vec4 position = ModelViewMatrix * vec4(vertex_position,1.0);//camera space
+
+		//normalised vector towards the light source
+		vec4 light_position = view * LightPosition;
+		L = normalize(vec3(light_position - position));
+  
+
+		V = vec3(normalize (-position));
+	}
+
+	
+	gl_Position = proj * view * model * vec4(vertex_position, 1.0);
+
+	texture_coordinates = vertex_texture;
+}
+
+
+  

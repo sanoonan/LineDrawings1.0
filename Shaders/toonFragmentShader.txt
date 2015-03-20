@@ -1,0 +1,44 @@
+#version 400
+
+uniform vec3 ka;
+uniform vec3 kd;
+uniform vec3 ks;
+uniform float spec_ex;
+
+
+uniform vec3 La;
+uniform vec3 Ld; 
+uniform vec3 Ls; 
+
+in vec3 N;
+in vec3 L;
+
+
+void main()
+{
+	vec3 _N = normalize(N);
+	vec3 _L = normalize(L);
+
+
+	vec3 Ia = La * ka;
+
+	float dot_diffuse = dot(_L, _N);
+	dot_diffuse = max(dot_diffuse, 0.0f);
+
+	vec3 color;
+
+	float intensity = dot_diffuse;
+	
+
+	if (intensity > 0.99)
+		color = ks*Ls;
+	else if (intensity > 0.5)
+		color = kd*Ld;
+	else if (intensity > 0.25)
+		color = kd*Ld*0.5;
+	else
+		color = ka*La;
+
+	gl_FragColor = vec4(color, 1.0);
+	
+}

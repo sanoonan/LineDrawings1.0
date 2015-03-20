@@ -1,0 +1,21 @@
+#version 400
+
+uniform sampler2D basic_texture;
+uniform bool has_texture;
+in vec2 texture_coordinates;
+
+in vec3 LightIntensity;
+
+
+
+void main()
+{
+	vec4 texel;
+
+	if(has_texture)
+		texel = texture2D(basic_texture, texture_coordinates);
+	else
+		texel = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	gl_FragColor = texel * vec4 (LightIntensity, 1.0);
+}
