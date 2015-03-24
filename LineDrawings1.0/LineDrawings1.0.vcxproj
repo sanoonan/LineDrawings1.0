@@ -87,6 +87,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Files\Camera.h" />
+    <ClInclude Include="Files\FBO.h" />
     <ClInclude Include="Files\Material.h" />
     <ClInclude Include="Files\Mesh.h" />
     <ClInclude Include="Files\RigidBody.h" />
@@ -98,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Files\Camera.cpp" />
+    <ClCompile Include="Files\FBO.cpp" />
     <ClCompile Include="Files\main.cpp" />
     <ClCompile Include="Files\Material.cpp" />
     <ClCompile Include="Files\Mesh.cpp" />
@@ -109,10 +111,16 @@
     <ClCompile Include="Files\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\Shaders\lambertianFS.txt" />
+    <Text Include="..\Shaders\lambertianVS.txt" />
     <Text Include="..\Shaders\LineDrawingShaders\diffuseToonFS.txt" />
     <Text Include="..\Shaders\LineDrawingShaders\diffuseToonVS.txt" />
+    <Text Include="..\Shaders\LineDrawingShaders\drawFrameFS.txt" />
+    <Text Include="..\Shaders\LineDrawingShaders\drawFrameVS.txt" />
     <Text Include="..\Shaders\LineDrawingShaders\toneDiffuseFS.txt" />
     <Text Include="..\Shaders\LineDrawingShaders\toneDiffuseVS.txt" />
+    <Text Include="..\Shaders\LineDrawingShaders\toneSpecFS.txt" />
+    <Text Include="..\Shaders\LineDrawingShaders\toneSpecVS.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -78,5 +78,6 @@ public:
 
 
 	void reset();
+
 };
 

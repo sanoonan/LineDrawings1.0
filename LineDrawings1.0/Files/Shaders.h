@@ -49,4 +49,6 @@ public:
 
 	void setBackground(glm::vec3 background);
 	void setToonValues(float thresh, float shade);
+	void setOffset(float offset);
+	
 };

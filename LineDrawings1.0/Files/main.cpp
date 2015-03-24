@@ -28,6 +28,7 @@
 #include "RigidBodyManager.h"
 #include "Shaders.h"
 #include "ShaderManager.h"
+#include "FBO.h"
 
 #include "AntTweakBar.h"
 
@@ -77,6 +78,14 @@ int height = 900;
 #define VS_TONEDIFF "../Shaders/LineDrawingShaders/toneDiffuseVS.txt"
 #define FS_TONEDIFF "../Shaders/LineDrawingShaders/toneDiffuseFS.txt"
 
+#define VS_TONESPEC "../Shaders/LineDrawingShaders/toneSpecVS.txt"
+#define FS_TONESPEC "../Shaders/LineDrawingShaders/toneSpecFS.txt"
+
+#pragma region FRAME SHADERS
+#define VS_DRAWFRAME "../Shaders/LineDrawingShaders/drawFrameVS.txt"
+#define FS_DRAWFRAME "../Shaders/LineDrawingShaders/drawFrameFS.txt"
+#pragma endregion
+
 #define MESH_SPHERE "Meshes/sphere.dae"
 #define MESH_SUZANNE "Meshes/suzanne.dae"
 
@@ -89,13 +98,24 @@ glm::vec3 la(1.0f, 1.0f, 1.0f);
 glm::vec3 ld(1.0f, 1.0f, 1.0f); 
 glm::vec3 ls(1.0f, 1.0f, 1.0f); 
 
+float light_intensity = 0.9f;
+
 RigidBodyManager bodies;
 
 glm::mat4 proj_mat, view_mat;
 
 
 ShaderManager shaders;
+ShaderManager frame_shaders;
 Shaders *current_shader;
+
+Shaders *frame_shader;
+
+bool use_frame_shader = false;
+
+FBO frame_buffer;
+
+float line_width = 0.005f;
 
 
 Shaders text_shader("Text", V_SHADER_LINE, F_SHADER_LINE);
@@ -106,12 +126,15 @@ float toon_shade = 0.5f;
 
 void addShaders()
 {
+	shaders.addShader("Tone Specular", VS_TONESPEC, FS_TONESPEC);
 	shaders.addShader("Tone Diffuse", VS_TONEDIFF, FS_TONEDIFF);
 	shaders.addShader("Toon", VS_TOON, FS_TOON);
-	shaders.addShader("Lambertian", VS_NORMALMAP, FS_NORMALMAP);
+	shaders.addShader("Lambertian", VS_LAMBERT, FS_LAMBERT);
 //	shaders.addShader("Oren-Nayar", VS_ORENNAYAR, FS_ORENNAYAR);
 //	shaders.addShader("Journey Diffuse", VS_JOURNEYDIFFUSE, FS_JOURNEYDIFFUSE);
 	
+	frame_shaders.addShader("Draw Frame", VS_DRAWFRAME, FS_DRAWFRAME);
+	frame_shader = &frame_shaders.shaders[0];
 }
 
 void addBodies()
@@ -141,13 +164,19 @@ void init_tweak()
 	bar = TwNewBar("Line Drawing");
 
 	shaders.addTBar(bar);
+
+	TwAddVarRW(bar, "Frame Shader?", TW_TYPE_BOOLCPP, &use_frame_shader, "");
+
 	camera.addTBar(bar);
 
 	TwAddVarRW(bar, "Light Position", TW_TYPE_DIR3F, &light_pos, "");
 
+	TwAddVarRW(bar, "Light Intensity", TW_TYPE_FLOAT, &light_intensity, "step = 0.05");
+
 	TwAddVarRW(bar, "Background Colour", TW_TYPE_COLOR3F, &background_colour, "");
-	TwAddVarRW(bar, "Toon Threshold", TW_TYPE_FLOAT, &toon_threshold, "step = 0.05");
+	TwAddVarRW(bar, "Toon Threshold", TW_TYPE_FLOAT, &toon_threshold, "");
 	TwAddVarRW(bar, "Toon Darkness", TW_TYPE_FLOAT, &toon_shade, "step = 0.05");
+	TwAddVarRW(bar, "Line Width", TW_TYPE_FLOAT, &line_width, "step = 0.001");
 	/*
 	TwAddVarRW(bar, "Light Ambient", TW_TYPE_COLOR3F, &la, "");
 	TwAddVarRW(bar, "Light Diffuse", TW_TYPE_COLOR3F, &ld, "");
@@ -176,6 +205,8 @@ void init()
 	shaders.compileShaders();
 
 	text_shader.CompileShaders();
+
+	frame_shaders.compileShaders();
 	
 
 	current_shader = &shaders.current_shader;
@@ -184,18 +215,17 @@ void init()
 
 	init_tweak();
 
-	camera.move_speed = 0.1f;
+	frame_buffer.setup(width, height);
 }
 
-void display()
+void drawScene()
 {
-
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
 	glClearColor (background_colour.x, background_colour.y, background_colour.z, 1.0f);
 
-	if(current_shader->name == "Tone Diffuse")
+	if((current_shader->name == "Tone Diffuse")||(current_shader->name == "Tone Specular"))
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -229,6 +259,25 @@ void display()
 
 
 
+	
+}
+
+
+
+void display()
+{
+	if(use_frame_shader)
+	{
+		frame_buffer.bind();
+		drawScene();
+		frame_buffer.drawFrame(frame_shader->id);
+
+		frame_shader->setOffset(line_width/2);
+	}
+	else
+		drawScene();
+	
+
 	glUseProgram(text_shader.id);
 
 	int text_colour_location = glGetUniformLocation (text_shader.id, "colour");
@@ -261,6 +310,8 @@ void updateScene()
 
 
 	bodies.update(elapsed_seconds);
+
+	ld = glm::vec3(light_intensity);
 
 
 	glutPostRedisplay();

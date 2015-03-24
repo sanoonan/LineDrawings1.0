@@ -150,3 +150,12 @@ void Shaders :: setToonValues(float thresh, float shade)
 	glUniform1fv (thresh_loc, 1, &thresh);
 	glUniform1fv (shade_loc, 1, &shade);
 }
+
+void Shaders :: setOffset(float offset)
+{
+	glUseProgram(id);
+
+	int offset_loc = glGetUniformLocation (id, "offset");
+
+	glUniform1fv (offset_loc, 1, &offset);
+}
